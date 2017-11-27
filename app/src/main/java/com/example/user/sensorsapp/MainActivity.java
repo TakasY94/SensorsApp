@@ -134,7 +134,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             tvLocationNet.setText(formatLocation(location));
         }
     }
-
+//wadawdawdawd
     private String formatLocation(Location location) {
         if (location == null)
             return "";
