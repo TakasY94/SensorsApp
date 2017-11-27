@@ -1,6 +1,8 @@
 package com.example.user.sensorsapp;
 
+import android.Manifest;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -8,6 +10,7 @@ import android.hardware.SensorManager;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.widget.TextView;
@@ -69,7 +72,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
             long curTime = System.currentTimeMillis();
 
-            if ((curTime - lastUpdate) > 100) {
+            if ((curTime - lastUpdate) > 3000) {
                 last_x = event.values[0];
                 last_y = event.values[1];
                 last_z = event.values[2];
@@ -89,8 +92,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     @Override
     protected void onPause() {
+        //Отключаем слушателей
         super.onPause();
         sensorManager.unregisterListener(this);
+        locationManager.removeUpdates(locationListener);
     }
 
     @Override
@@ -98,7 +103,14 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         super.onResume();
         sensorManager.registerListener(this, sensor, sensorManager.SENSOR_DELAY_NORMAL);
 
-        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000*10, 10, locationListener);
+
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            //Проверяем наличие разрешений на определение местоположений
+            return;
+        }
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000 * 5, 10, locationListener);
+        locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 1000 * 5, 10, locationListener);
+        checkEnabled();
     }
 
     private LocationListener locationListener = new LocationListener() {
@@ -109,12 +121,20 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         @Override
         public void onStatusChanged(String provider, int status, Bundle extras) {
-
+            if (provider.equals(LocationManager.GPS_PROVIDER)) {
+                tvStatusGPS.setText("Status: " + String.valueOf(status));
+            } else if (provider.equals(LocationManager.NETWORK_PROVIDER)) {
+                tvStatusNet.setText("Status: " + String.valueOf(status));
+            }
         }
 
         @Override
         public void onProviderEnabled(String provider) {
             checkEnabled();
+            if (ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+
+                return;
+            }
             showLocation(locationManager.getLastKnownLocation(provider));
         }
 
