@@ -13,9 +13,16 @@ import android.location.LocationManager;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
+import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
 
+import com.example.user.sensorsapp.ClientSide.ClientSide;
+
 import java.util.Date;
+
+import static java.lang.Thread.sleep;
 
 public class MainActivity extends AppCompatActivity implements SensorEventListener {
 
@@ -39,6 +46,11 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private TextView tvStatusNet;
     private TextView tvLocationNet;
 
+    private Parametres parametres = new Parametres(1.22f, 2.22f, 3.22f, "default", "default");
+    private Button buttonOpen = null;
+    private Button buttonSend = null;
+    private Button buttonClose = null;
+    private ClientSide server = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,7 +73,75 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         //Инициализация датчика  GPS
         locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+
+        //Инициализация кнопок
+        buttonOpen = (Button) findViewById(R.id.button_open_connection);
+        buttonSend = (Button) findViewById(R.id.button_send_connection);
+        buttonClose = (Button) findViewById(R.id.button_close_connection);
+        buttonClose.setEnabled(false);
+        buttonSend.setEnabled(false);
+
+        buttonOpen.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                //Объект для работы ссервером
+                server = new ClientSide();
+                //Открываем соединение
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            server.openConnection();
+
+                            //Делаем кнопки активными в ui потоке
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    buttonSend.setEnabled(true);
+                                    buttonClose.setEnabled(true);
+                                }
+                            });
+                        } catch (Exception e) {
+                            Log.e("serverApp", e.getMessage());
+                            server = null;
+                        }
+                    }
+                }).start();
+            }
+        });
+
+        buttonSend.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (server == null) {
+                    Log.e("serverApp","Сервер не создан");
+                }
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            while (true) {
+                                server.sendData(parametres);
+                                sleep(3000);
+                            }
+                        } catch (Exception e) {
+                            Log.e("serverApp",e.getMessage());
+                        }
+                    }
+                }).start();
+            }
+        });
+
+        buttonClose.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                server.closeConnection();
+                buttonSend.setEnabled(false);
+                buttonClose.setEnabled(false);
+            }
+        });
     }
+
 
     @Override
     public void onSensorChanged(SensorEvent event) {
@@ -79,6 +159,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 xView.setText(Float.toString(last_x));
                 yView.setText(Float.toString(last_y));
                 zView.setText(Float.toString(last_z));
+                parametres.setAccX(last_x);
+                parametres.setAccY(last_y);
+                parametres.setAccZ(last_z);
                 lastUpdate = curTime;
             }
         }
@@ -149,9 +232,11 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             return;
         if (location.getProvider().equals(LocationManager.GPS_PROVIDER)) {
             tvLocationGPS.setText(formatLocation(location));
+            parametres.setDataGPS(formatLocation(location));
         }
         else if (location.getProvider().equals(LocationManager.NETWORK_PROVIDER)) {
             tvLocationNet.setText(formatLocation(location));
+            parametres.setDataNetwork(formatLocation(location));
         }
     }
 
