@@ -20,6 +20,7 @@ import android.widget.TextView;
 
 import com.example.user.sensorsapp.ClientSide.ClientSide;
 
+import java.io.IOException;
 import java.util.Date;
 
 import static java.lang.Thread.sleep;
@@ -85,7 +86,11 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             @Override
             public void onClick(View v) {
                 //Объект для работы ссервером
-                server = new ClientSide();
+                try {
+                    server = new ClientSide();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
                 //Открываем соединение
                 new Thread(new Runnable() {
                     @Override

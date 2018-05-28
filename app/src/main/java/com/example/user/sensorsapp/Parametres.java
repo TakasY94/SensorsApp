@@ -1,10 +1,12 @@
 package com.example.user.sensorsapp;
 
+import java.io.Serializable;
+
 /**
  * Created by User on 19.01.2018.
  */
 
-public class Parametres {
+public class Parametres implements Serializable {
 
     private float accX;
     private float accY;

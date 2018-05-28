@@ -5,6 +5,7 @@ import android.util.Log;
 import com.example.user.sensorsapp.Parametres;
 
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.net.Socket;
 
 /**
@@ -15,7 +16,9 @@ public class ClientSide {
     private String hostName = "10.0.2.2";
     private int hostPort = 2666;
     private Socket socket = null; // сокет, через который приложение общается с сервером
-    public ClientSide() {}
+    private ObjectOutputStream objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
+
+    public ClientSide() throws IOException {}
 
 
 
@@ -48,11 +51,14 @@ public class ClientSide {
         }
 
         try {
-            socket.getOutputStream().write((Float.toString(parametres.getAccX()) + " ").getBytes());
+            objectOutputStream.writeObject(parametres);
+
+         /*   socket.getOutputStream().write((Float.toString(parametres.getAccX()) + " ").getBytes());
             socket.getOutputStream().write((Float.toString(parametres.getAccY()) + " ").getBytes());
             socket.getOutputStream().write((Float.toString(parametres.getAccZ()) + " ").getBytes());
             socket.getOutputStream().write((parametres.getDataGPS() + " ").getBytes());
             socket.getOutputStream().write((parametres.getDataNetwork() + " ").getBytes());
+         */
         } catch (IOException e) {
             throw new Exception("Impossible to send data" + e.getMessage());
         }
