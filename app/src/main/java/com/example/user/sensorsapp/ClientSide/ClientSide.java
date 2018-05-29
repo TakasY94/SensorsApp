@@ -16,7 +16,7 @@ public class ClientSide {
     private String hostName = "10.0.2.2";
     private int hostPort = 2666;
     private Socket socket = null; // сокет, через который приложение общается с сервером
-    private ObjectOutputStream objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
+    private ObjectOutputStream objectOutputStream;
 
     public ClientSide() throws IOException {}
 
@@ -51,6 +51,7 @@ public class ClientSide {
         }
 
         try {
+            objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
             objectOutputStream.writeObject(parametres);
 
          /*   socket.getOutputStream().write((Float.toString(parametres.getAccX()) + " ").getBytes());
