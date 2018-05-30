@@ -27,6 +27,10 @@ public class ClientSide {
 
         try {
             socket = new Socket(hostName, hostPort);
+            objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
+            if (socket != null) {
+            System.out.println("socket was created");
+            }
         } catch (IOException e) {
             throw new Exception("Impossible to create socket" + e.getMessage());
         }
@@ -51,7 +55,7 @@ public class ClientSide {
         }
 
         try {
-            objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
+            System.out.println("Socket is not null");
             objectOutputStream.writeObject(parametres);
 
          /*   socket.getOutputStream().write((Float.toString(parametres.getAccX()) + " ").getBytes());
